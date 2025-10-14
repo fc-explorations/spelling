@@ -402,7 +402,7 @@ async function loadLevel(file){
   try{
     currentIndex = levelFiles.indexOf(file);
     const res=await fetch(file); const text=await res.text(); const data=jsyaml.load(text);
-    wordQueue=data.map(d=>({...d,priority:0,choices:[d.word.slice(d.start,d.end),...d.wrong]}));
+    wordQueue=data.map(d=>({...d,priority:1,choices:[d.word.slice(d.start,d.end),...d.wrong]}));
     correctCount=0; totalCount=0;
     localStorage.setItem("currentFile",file);
     levelSelect.value = file;
