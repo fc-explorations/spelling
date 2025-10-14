@@ -397,6 +397,7 @@ async function discoverLevels(){
   if(saved)currentIndex=Math.max(0,levelFiles.indexOf(saved));
   loadLevel(levelFiles[currentIndex]);
 }
+
 async function loadLevel(file){
   try{
     currentIndex = levelFiles.indexOf(file);
@@ -410,7 +411,21 @@ async function loadLevel(file){
     wordDisplay.textContent="🎉 All levels complete!"; optionsDiv.innerHTML=""; feedback.textContent="";
   }
 }
-function pickNext(k=3){wordQueue.sort((a,b)=>b.priority-a.priority); const top=wordQueue.slice(0,Math.min(k,wordQueue.length)); return top[Math.floor(Math.random()*top.length)];}
+
+function pickNext() {
+  if (!wordQueue.length) return null;
+
+  // Give every word a 'weight'. Higher priority = higher weight.
+  // Add 1 to avoid zero-weight for new/correctly answered words.
+  const totalWeight = wordQueue.reduce((sum, word) => sum + word.priority + 1, 0);
+  let random = Math.random() * totalWeight;
+
+  for (const word of wordQueue) {
+    random -= (word.priority + 1);
+    if (random <= 0) return word;
+  }
+  return wordQueue[wordQueue.length - 1]; // Fallback
+}
 
 function renderWordWithBoxes(wordStr, className = '') {
   wordDisplay.innerHTML = "";
