@@ -222,7 +222,7 @@
     <h1>Spelling Game</h1>
   </div>
 
-<button id="admin-toggle">⚙️ Admin</button>
+<button id="admin-toggle">⚙️ Setup</button>
 
 <div id="game-box">
   <div id="game-header">
@@ -261,7 +261,7 @@
     </div>
     <button id="save-voice" style="margin-top: 15px;">Save Voice Settings</button>
     <hr>
-    <h4>Create / Edit Level</h4>
+    <h4>Add Words to Current Level</h4>
     <label for="word-input">Word:</label><input id="word-input">
     <label for="start-input">Start index:</label><input type="number" id="start-input" min="0">
     <label for="end-input">End index:</label><input type="number" id="end-input" min="1">
@@ -269,7 +269,8 @@
     <label for="wrong2-input">Wrong option 2:</label><input id="wrong2-input">
     <button id="add-entry">Add Entry</button>
     <div id="entries"></div>
-    <button id="download-yaml">Download YAML</button>
+    <button id="save-level">Save Level</button>
+    <button id="reset-level">Reset Level to Default</button>
   </div>
 
 <script>
@@ -364,17 +365,31 @@ document.getElementById("add-entry").onclick=()=>{
   const w2=document.getElementById("wrong2-input").value.trim();
   if(!w||isNaN(s)||isNaN(e)||!w1||!w2)return alert("Please fill all fields for the new entry.");
   if(s >= e) return alert("Start index must be less than end index.");
-  entries.push({word:w,start:s,end:e,wrong:[w1,w2]});
+  const newEntry = {word:w,start:s,end:e,wrong:[w1,w2]};
+  entries.push(newEntry);
+  // Also add to the live wordQueue for the current session
+  wordQueue.push({
+    ...newEntry,
+    priority: 1, // Initialize with default priority
+    choices: [newEntry.word.slice(newEntry.start, newEntry.end), ...newEntry.wrong]
+  });
   ["word-input","start-input","end-input","wrong1-input","wrong2-input"].forEach(id=>document.getElementById(id).value="");
   refreshEntries();
 };
-document.getElementById("download-yaml").onclick=()=>{
-  if(!entries.length)return alert("Add at least one entry!");
-  const blob=new Blob([jsyaml.dump(entries)],{type:"text/yaml"});
-  const link=document.createElement("a");
-  link.href=URL.createObjectURL(blob);
-  link.download="new_level.yaml";
-  link.click();
+document.getElementById("save-level").onclick=()=>{
+  if(!wordQueue.length)return alert("The current level is empty!");
+  const levelDataToSave = wordQueue.map(({ word, start, end, wrong }) => ({ word, start, end, wrong }));
+  const yamlString = jsyaml.dump(levelDataToSave);
+  const currentFile = levelFiles[currentIndex];
+  localStorage.setItem(`custom_${currentFile}`, yamlString);
+  entries.length = 0;
+  refreshEntries();
+  alert(`Level '${currentFile}' saved locally!`);
+};
+document.getElementById("reset-level").onclick=()=>{
+  const currentFile = levelFiles[currentIndex];
+  localStorage.removeItem(`custom_${currentFile}`);
+  alert(`Level '${currentFile}' has been reset. It will load from the original file on the next refresh or level change.`);
 };
 
 // ---------------- Game ----------------
@@ -400,8 +415,16 @@ async function discoverLevels(){
 
 async function loadLevel(file){
   try{
+    let data;
     currentIndex = levelFiles.indexOf(file);
-    const res=await fetch(file); const text=await res.text(); const data=jsyaml.load(text);
+    const customLevel = localStorage.getItem(`custom_${file}`);
+    if (customLevel) {
+      console.log(`Loading custom version of ${file} from localStorage.`);
+      data = jsyaml.load(customLevel);
+    } else {
+      const res=await fetch(file); const text=await res.text();
+      data=jsyaml.load(text);
+    }
     wordQueue=data.map(d=>({...d,priority:1,choices:[d.word.slice(d.start,d.end),...d.wrong]}));
     correctCount=0; totalCount=0;
     localStorage.setItem("currentFile",file);
