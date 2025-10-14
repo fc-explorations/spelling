@@ -2,6 +2,9 @@
 
 A simple, adaptive spelling game designed to help users practice and improve their English spelling skills. The game uses an intelligent priority queue to present words the user struggles with more frequently. It's built with vanilla HTML, CSS, and JavaScript, and uses YAML for easy level creation.
 
+[[link]](https://fc-explorations.github.io/spelling/)
+
+
 ## ✨ Features
 
 - **Adaptive Learning**: Words answered incorrectly are shown more often.
