@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Adaptive Spelling Game with Voice Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<style>
+  :root {
+    --font-family: "Nunito", "Comic Sans MS", cursive, sans-serif;
+    --primary-bg: #172c16;
+    --secondary-bg: #7fd9fd;
+    --box-bg: white;
+    --btn-bg: #ffd966;
+    --btn-hover-bg: #f4b942;
+    --success-color: #2ecc71;
+    --success-glow: #27ae60;
+    --error-color: #e74c3c;
+    --error-glow: #c0392b;
+    --next-btn-bg: #7ad97a;
+    --next-btn-hover-bg: #5ec75e;
+    --admin-bg: #fff3cd;
+    --admin-toggle-bg: #3498db;
+    --text-color: #333333;
+  }
+
+  /* --- General Styles --- */
+  body {
+    font-family: var(--font-family);
+    background: radial-gradient(ellipse at top center, var(--secondary-bg), var(--primary-bg));
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 0;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+  .title-container {
+    position: relative;
+    text-align: center;
+  }
+  .title-container h1 {
+    font-size: 3.2em;
+    color: white;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
+  }
+  #game-box {
+    background: var(--box-bg);
+    border-radius: 20px;
+    padding: 40px 60px;
+    box-shadow: 0 0 25px rgba(0,0,0,0.25);
+    max-width: 90%;
+  }
+  #word-display {
+    font-size: 2.8em;
+    margin: 30px 0;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+  .letter-box {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 1.2em; height: 1.2em;
+  }
+  #options {
+    text-align: center;
+    margin-top: 20px;
+  }
+  .option-btn {
+    background-color: var(--btn-bg); border: none; border-radius: 15px;
+    font-size: 1.6em; padding: 12px 28px; margin: 10px;
+    cursor: pointer; transition: all 0.25s ease;
+  }
+  .option-btn:hover { background-color: var(--btn-hover-bg); transform: scale(1.05); }
+  #feedback { font-size: 1.6em; font-weight: bold; margin-top: 25px; height: 1.8em; }
+  .glow-green { color: var(--success-color); text-shadow: 0 0 10px var(--success-color), 0 0 20px var(--success-glow); }
+  .correct-answer-word { color: var(--success-color); }
+  .glow-red { color: var(--error-color); text-shadow: 0 0 10px var(--error-color), 0 0 20px var(--error-glow); }
+  .wrong-answer-word { color: var(--error-color); }
+  #score {
+    font-size: 1.3em;
+    color: var(--text-color);
+    font-weight: bold;
+    background-color: #f0f0f0;
+    padding: 5px 15px;
+    border-radius: 10px;
+  }
+  #game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 15px;
+    margin-bottom: 30px; /* Increased space */
+    border-bottom: 2px solid #f0f0f0;
+  }
+  #level-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 0; /* Reset margin */
+    font-weight: bold;
+  }
+  #level-select {
+    font-size: 1em; padding: 5px; border-radius: 8px; border: 1px solid #ccc; font-family: var(--font-family); background-color: white;
+  }
+
+  /* --- Overlay --- */
+  #admin-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: none; /* Initially hidden */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+  #admin-close-btn {
+    position: absolute;
+    top: 10px;
+    right: 15px;
+    font-size: 2em;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+  }
+  /* --- Admin Panel --- */
+  #admin-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    cursor: pointer;
+    background: var(--admin-toggle-bg);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 15px;
+    font-family: var(--font-family);
+    z-index: 999; /* Below overlay, but above other content */
+  }
+  #admin-panel {
+    position: relative; /* For positioning the close button */
+    background: var(--admin-bg);
+    padding: 15px; border-radius: 12px; text-align: left;
+    width: 90%;
+    max-width: 440px;
+  }
+  #admin-panel input, #admin-panel select, #admin-panel textarea {
+    width: 100%; margin: 5px 0 10px 0; padding: 8px;
+    box-sizing: border-box;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-family: var(--font-family);
+  }
+  #admin-panel button {
+    margin-top: 10px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
+  .form-grid {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 5px 10px;
+    align-items: center;
+  }
+  /* --- Toggle Switch --- */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+  }
+  .switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 28px;
+  }
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+  }
+  input:checked + .slider { background-color: var(--success-color); }
+  input:checked + .slider:before { transform: translateX(22px); }
+  #entries { margin-top: 10px; font-size: 0.9em; }
+</style>
+</head>
+<body>
+
+  <div class="title-container">
+    <h1>Spelling Game</h1>
+  </div>
+
+<button id="admin-toggle">⚙️ Admin</button>
+
+<div id="game-box">
+  <div id="game-header">
+    <div id="level-container">
+      <label for="level-select">Level:</label>
+      <select id="level-select"></select>
+    </div>
+    <div id="score"></div>
+  </div>
+  <div id="word-display"></div>
+  <div id="options"></div>
+  <div id="feedback"></div>
+</div>
+
+<div id="admin-overlay">
+  <div id="admin-panel">
+    <button id="admin-close-btn">&times;</button>
+    <h3>Admin Settings</h3>
+    <label for="acc-threshold">Advance if accuracy ≥ (%)</label>
+    <input type="number" id="acc-threshold" min="50" max="100">
+    <label for="attempt-threshold">After at least (attempts)</label>
+    <input type="number" id="attempt-threshold" min="1">
+    <button id="save-settings">Save Thresholds</button>
+    <hr>
+    <h4>Speech Settings</h4>
+    <div class="form-grid">
+      <label for="enable-speech">Enable speech:</label>
+      <label class="switch">
+        <input type="checkbox" id="enable-speech"><span class="slider"></span>
+      </label>
+      <label for="voice-select">Voice:</label>
+      <select id="voice-select"></select>
+      <label for="voice-rate">Speed (rate):</label>
+      <input type="range" id="voice-rate" min="0.5" max="1.5" step="0.1">
+      <span id="rate-value"></span>
+    </div>
+    <button id="save-voice" style="margin-top: 15px;">Save Voice Settings</button>
+    <hr>
+    <h4>Create / Edit Level</h4>
+    <label for="word-input">Word:</label><input id="word-input">
+    <label for="start-input">Start index:</label><input type="number" id="start-input" min="0">
+    <label for="end-input">End index:</label><input type="number" id="end-input" min="1">
+    <label for="wrong1-input">Wrong option 1:</label><input id="wrong1-input">
+    <label for="wrong2-input">Wrong option 2:</label><input id="wrong2-input">
+    <button id="add-entry">Add Entry</button>
+    <div id="entries"></div>
+    <button id="download-yaml">Download YAML</button>
+  </div>
+
+<script>
+// --------------- Global State ----------------
+let wordQueue=[],current=null,correctCount=0,totalCount=0;
+let levelFiles=[],currentIndex=0;
+let accThreshold=parseFloat(localStorage.getItem("accThreshold")||"80");
+let attemptThreshold=parseInt(localStorage.getItem("attemptThreshold")||"10");
+
+let speechEnabled=localStorage.getItem("speechEnabled")==="true";
+let speechRate=parseFloat(localStorage.getItem("speechRate")||"0.9");
+let speechVoiceURI=localStorage.getItem("speechVoiceURI")||"";
+
+// DOM
+const levelSelect=document.getElementById("level-select");
+const wordDisplay=document.getElementById("word-display");
+const optionsDiv=document.getElementById("options");
+const feedback=document.getElementById("feedback");
+const scoreDiv=document.getElementById("score");
+
+// ---------------- Speech ----------------
+function getVoiceList(){
+  const select=document.getElementById("voice-select");
+  select.innerHTML="";
+  const voices=speechSynthesis.getVoices().filter(v=>v.lang.startsWith("en"));
+  voices.forEach(v=>{
+    const opt=document.createElement("option");
+    opt.value=v.voiceURI;
+    opt.textContent=`${v.name} (${v.lang})`;
+    if(v.voiceURI===speechVoiceURI) opt.selected=true;
+    select.appendChild(opt);
+  });
+}
+speechSynthesis.onvoiceschanged=getVoiceList;
+
+function speak(text){
+  if(!speechEnabled||!("speechSynthesis" in window))return;
+  const u=new SpeechSynthesisUtterance(text);
+  const voices=speechSynthesis.getVoices();
+  const chosen=voices.find(v=>v.voiceURI===speechVoiceURI)
+    || voices.find(v=>v.lang.startsWith("en")) || voices[0];
+  u.voice=chosen; u.rate=speechRate; u.pitch=1.1;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+
+// ---------------- Admin ----------------
+const adminOverlay=document.getElementById("admin-overlay");
+document.getElementById("admin-toggle").onclick=()=>{
+  adminOverlay.style.display="flex";
+  document.getElementById("acc-threshold").value=accThreshold;
+  document.getElementById("attempt-threshold").value=attemptThreshold;
+  document.getElementById("enable-speech").checked=speechEnabled;
+  document.getElementById("voice-rate").value=speechRate;
+  document.getElementById("rate-value").textContent=speechRate.toFixed(1);
+  getVoiceList();
+};
+document.getElementById("admin-close-btn").onclick=()=>adminOverlay.style.display="none";
+adminOverlay.onclick=(e)=>{
+  if(e.target===adminOverlay) adminOverlay.style.display="none";
+};
+document.getElementById("save-settings").onclick=()=>{
+  accThreshold=parseFloat(document.getElementById("acc-threshold").value);
+  attemptThreshold=parseInt(document.getElementById("attempt-threshold").value);
+  localStorage.setItem("accThreshold",accThreshold);
+  localStorage.setItem("attemptThreshold",attemptThreshold);
+  alert("Thresholds saved!");
+};
+document.getElementById("voice-rate").oninput=(e)=>{
+  document.getElementById("rate-value").textContent=e.target.value;
+};
+document.getElementById("save-voice").onclick=()=>{
+  speechEnabled=document.getElementById("enable-speech").checked;
+  speechRate=parseFloat(document.getElementById("voice-rate").value);
+  speechVoiceURI=document.getElementById("voice-select").value;
+  localStorage.setItem("speechEnabled",speechEnabled);
+  localStorage.setItem("speechRate",speechRate);
+  localStorage.setItem("speechVoiceURI",speechVoiceURI);
+  alert("Voice settings saved!");
+};
+
+// ---------------- Level Editor ----------------
+const entries=[];
+function refreshEntries(){
+  const div=document.getElementById("entries");
+  div.innerHTML=entries.length?`<pre>${jsyaml.dump(entries)}</pre>`:"<em>No entries yet</em>";
+}
+document.getElementById("add-entry").onclick=()=>{
+  const w=document.getElementById("word-input").value.trim();
+  const s=parseInt(document.getElementById("start-input").value);
+  const e=parseInt(document.getElementById("end-input").value);
+  const w1=document.getElementById("wrong1-input").value.trim();
+  const w2=document.getElementById("wrong2-input").value.trim();
+  if(!w||isNaN(s)||isNaN(e)||!w1||!w2)return alert("Please fill all fields for the new entry.");
+  if(s >= e) return alert("Start index must be less than end index.");
+  entries.push({word:w,start:s,end:e,wrong:[w1,w2]});
+  ["word-input","start-input","end-input","wrong1-input","wrong2-input"].forEach(id=>document.getElementById(id).value="");
+  refreshEntries();
+};
+document.getElementById("download-yaml").onclick=()=>{
+  if(!entries.length)return alert("Add at least one entry!");
+  const blob=new Blob([jsyaml.dump(entries)],{type:"text/yaml"});
+  const link=document.createElement("a");
+  link.href=URL.createObjectURL(blob);
+  link.download="new_level.yaml";
+  link.click();
+};
+
+// ---------------- Game ----------------
+async function discoverLevels(){
+  try{
+    const r=await fetch("index.json");
+    if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+    const json=await r.json(); levelFiles=json.sort();
+  } catch(e) { console.error("Could not fetch index.json, using fallback levels.", e); levelFiles=["level_1.yaml","level_1.2.yaml","level_2.yaml"].sort();}
+  
+  levelSelect.innerHTML = "";
+  levelFiles.forEach(file => {
+    const option = document.createElement("option");
+    option.value = file;
+    option.textContent = file.replace(/_/g, ' ').replace('.yaml', '');
+    levelSelect.appendChild(option);
+  });
+
+  const saved=localStorage.getItem("currentFile");
+  if(saved)currentIndex=Math.max(0,levelFiles.indexOf(saved));
+  loadLevel(levelFiles[currentIndex]);
+}
+async function loadLevel(file){
+  try{
+    currentIndex = levelFiles.indexOf(file);
+    const res=await fetch(file); const text=await res.text(); const data=jsyaml.load(text);
+    wordQueue=data.map(d=>({...d,priority:0,choices:[d.word.slice(d.start,d.end),...d.wrong]}));
+    correctCount=0; totalCount=0;
+    localStorage.setItem("currentFile",file);
+    levelSelect.value = file;
+    renderNext();
+  }catch{
+    wordDisplay.textContent="🎉 All levels complete!"; optionsDiv.innerHTML=""; feedback.textContent="";
+  }
+}
+function pickNext(k=3){wordQueue.sort((a,b)=>b.priority-a.priority); const top=wordQueue.slice(0,Math.min(k,wordQueue.length)); return top[Math.floor(Math.random()*top.length)];}
+
+function renderWordWithBoxes(wordStr, className = '') {
+  wordDisplay.innerHTML = "";
+  wordDisplay.className = className;
+  for (const char of wordStr) {
+    const charSpan = document.createElement('span');
+    charSpan.className = 'letter-box';
+    charSpan.textContent = char === '_' ? '' : char;
+    if (char === '_') charSpan.style.borderBottom = '4px solid var(--text-color)';
+    wordDisplay.appendChild(charSpan);
+  }
+}
+
+function renderNext(){
+  if(!wordQueue.length)return;
+  current=pickNext(); feedback.textContent=""; feedback.className="";
+  const {word,start,end,choices}=current;
+  const shown=word.slice(0,start)+"_".repeat(end-start)+word.slice(end);
+  renderWordWithBoxes(shown);
+  speak(word);
+  const shuffled=[...choices].sort(()=>Math.random()-0.5);
+  optionsDiv.innerHTML="";
+  shuffled.forEach(choice=>{
+    const b=document.createElement("button");
+    b.className="option-btn"; b.textContent=choice;
+    b.onclick=()=>handleAnswer(choice, choice===word.slice(start,end));
+    optionsDiv.appendChild(b);
+  });
+  updateScore();
+}
+function handleAnswer(selectedChoice, correct){
+  Array.from(document.querySelectorAll(".option-btn")).forEach(b=>b.disabled=true);
+  totalCount++;
+  feedback.textContent = ""; feedback.className = ""; // Clear old feedback
+  if(correct){
+    correctCount++;
+    renderWordWithBoxes(current.word, "correct-answer-word");
+    current.priority=Math.max(current.priority-1,0);
+  }else{
+    const wrongWord = current.word.slice(0, current.start) + selectedChoice + current.word.slice(current.end);
+    renderWordWithBoxes(wrongWord, "wrong-answer-word");
+    current.priority+=2;
+  }
+  speak(current.word);
+  const idx=wordQueue.findIndex(x=>x.word===current.word); if(idx!==-1)wordQueue[idx]=current;
+  updateScore();
+
+  if(totalCount>=attemptThreshold && (correctCount/totalCount)*100>=accThreshold){
+    setTimeout(()=>{currentIndex++; if(currentIndex<levelFiles.length)loadLevel(levelFiles[currentIndex]); else feedback.textContent="🎉 All levels complete!";},3000);
+  } else {
+    setTimeout(renderNext, 3000);
+  }
+}
+function updateScore(){scoreDiv.textContent=`Score: ${correctCount}/${totalCount}`;}
+
+levelSelect.addEventListener("change", (e) => loadLevel(e.target.value));
+discoverLevels();
+refreshEntries();
+getVoiceList();
+</script>
+</body>
+</html>
