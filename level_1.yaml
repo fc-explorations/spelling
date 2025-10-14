@@ -1,0 +1,42 @@
+- word: "cat"
+  start: 1
+  end: 2
+  wrong:
+    - "e"
+    - "i"
+- word: "dog"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "u"
+- word: "sun"
+  start: 1
+  end: 2
+  wrong:
+    - "o"
+    - "a"
+- word: "run"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "e"
+- word: "big"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "u"
+- word: "red"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "i"
+- word: "hat"
+  start: 1
+  end: 2
+  wrong:
+    - "i"
+    - "o"

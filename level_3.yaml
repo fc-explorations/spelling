@@ -1,0 +1,36 @@
+- word: "cake"
+  start: 1
+  end: 2
+  wrong:
+    - "i"
+    - "o"
+- word: "bike"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "e"
+- word: "rope"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "u"
+- word: "cute"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "i"
+- word: "game"
+  start: 1
+  end: 2
+  wrong:
+    - "o"
+    - "e"
+- word: "home"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "i"

@@ -1,0 +1,36 @@
+- word: "boat"
+  start: 1
+  end: 3
+  wrong:
+    - "ou"
+    - "ea"
+- word: "rain"
+  start: 1
+  end: 3
+  wrong:
+    - "ay"
+    - "ei"
+- word: "tree"
+  start: 2
+  end: 4
+  wrong:
+    - "ea"
+    - "ey"
+- word: "fish"
+  start: 2
+  end: 4
+  wrong:
+    - "ch"
+    - "th"
+- word: "duck"
+  start: 2
+  end: 4
+  wrong:
+    - "k"
+    - "c"
+- word: "star"
+  start: 2
+  end: 4
+  wrong:
+    - "or"
+    - "er"
