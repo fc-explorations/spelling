@@ -1,36 +1,72 @@
-- word: "boat"
+- word: "cake"
   start: 1
-  end: 3
+  end: 2
   wrong:
-    - "ou"
-    - "ea"
-- word: "rain"
+    - "i"
+    - "o"
+- word: "bike"
   start: 1
-  end: 3
+  end: 2
   wrong:
-    - "ay"
-    - "ei"
-- word: "tree"
-  start: 2
-  end: 4
+    - "a"
+    - "e"
+- word: "rope"
+  start: 1
+  end: 2
   wrong:
-    - "ea"
-    - "ey"
-- word: "fish"
-  start: 2
-  end: 4
+    - "a"
+    - "u"
+- word: "cute"
+  start: 1
+  end: 2
   wrong:
-    - "ch"
-    - "th"
-- word: "duck"
-  start: 2
-  end: 4
+    - "a"
+    - "i"
+- word: "note"
+  start: 1
+  end: 2
   wrong:
-    - "k"
-    - "c"
-- word: "star"
-  start: 2
-  end: 4
+    - "a"
+    - "i"
+- word: "fine"
+  start: 1
+  end: 2
   wrong:
-    - "or"
-    - "er"
+    - "a"
+    - "e"
+- word: "hike"
+  start: 1
+  end: 2
+  wrong:
+    - "o"
+    - "a"
+- word: "mole"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "i"
+- word: "rule"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "o"
+- word: "wave"
+  start: 1
+  end: 2
+  wrong:
+    - "i"
+    - "o"
+- word: "game"
+  start: 1
+  end: 2
+  wrong:
+    - "o"
+    - "e"
+- word: "home"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "i"

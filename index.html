@@ -103,6 +103,10 @@
     text-align: center;
     margin-top: 20px;
   }
+  #replay-container {
+    text-align: center;
+    margin-top: 10px;
+  }
   .option-btn {
     background-color: var(--btn-bg); border: none; border-radius: 15px;
     font-size: 1.6em; padding: 12px 28px; margin: 10px;
@@ -262,6 +266,9 @@
   </div>
   <div id="word-display"></div>
   <div id="options"></div>
+  <div id="replay-container">
+    <button id="replay-word" class="option-btn" type="button">🔁 Hear it again</button>
+  </div>
   <div id="feedback"></div>
 </div>
 
@@ -325,10 +332,18 @@ const wordDisplay=document.getElementById("word-display");
 const optionsDiv=document.getElementById("options");
 const feedback=document.getElementById("feedback");
 const scoreDiv=document.getElementById("score");
+const replayButton=document.getElementById("replay-word");
 const correctSpellingPopup=document.getElementById("correct-spelling-popup");
 const correctSpellingWord=document.getElementById("correct-spelling-word");
 
 let correctPopupTimeout=null;
+
+if(replayButton){
+  replayButton.onclick=()=>{
+    if(current) speak(current.word);
+  };
+  replayButton.disabled=true;
+}
 
 // ---------------- Speech ----------------
 function getVoiceList(){
@@ -479,6 +494,8 @@ async function loadLevel(file){
     renderNext();
   }catch{
     wordDisplay.textContent="🎉 All levels complete!"; optionsDiv.innerHTML=""; feedback.textContent="";
+    current=null;
+    if(replayButton) replayButton.disabled=true;
   }
 }
 
@@ -519,10 +536,15 @@ function renderWordWithBoxes(wordStr, className = '', blankRange = null) {
 }
 
 function renderNext(){
-  if(!wordQueue.length)return;
+  if(!wordQueue.length){
+    current=null;
+    if(replayButton) replayButton.disabled=true;
+    return;
+  }
   current=pickNext(); feedback.textContent=""; feedback.className="";
   const {word,start,end,choices}=current;
   renderWordWithBoxes(word, '', {start, end});
+  if(replayButton) replayButton.disabled=false;
   speak(word);
   const shuffled=[...choices].sort(()=>Math.random()-0.5);
   optionsDiv.innerHTML="";
@@ -535,7 +557,7 @@ function renderNext(){
   updateScore();
 }
 function handleAnswer(selectedChoice, correct){
-  Array.from(document.querySelectorAll(".option-btn")).forEach(b=>b.disabled=true);
+  Array.from(optionsDiv.querySelectorAll(".option-btn")).forEach(b=>b.disabled=true);
   totalCount++;
   feedback.textContent = ""; feedback.className = ""; // Clear old feedback
   if(correct){

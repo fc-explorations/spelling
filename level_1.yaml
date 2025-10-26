@@ -184,3 +184,21 @@
   wrong:
     - "u"
     - "oo"
+- word: "moth"
+  start: 2
+  end: 4
+  wrong:
+    - "ff"
+    - "t"
+- word: "muck"
+  start: 1
+  end: 3
+  wrong:
+    - "a"
+    - "e"
+- word: "night"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "ei"
