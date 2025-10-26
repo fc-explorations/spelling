@@ -71,6 +71,10 @@
     align-items: center;
     width: 1.2em; height: 1.2em;
   }
+  .letter-box.blank {
+    width: 3.2em;
+    border-bottom: 4px solid var(--text-color);
+  }
   #options {
     text-align: center;
     margin-top: 20px;
@@ -450,15 +454,24 @@ function pickNext() {
   return wordQueue[wordQueue.length - 1]; // Fallback
 }
 
-function renderWordWithBoxes(wordStr, className = '') {
+function renderWordWithBoxes(wordStr, className = '', blankRange = null) {
   wordDisplay.innerHTML = "";
   wordDisplay.className = className;
-  for (const char of wordStr) {
+  let i = 0;
+  while (i < wordStr.length) {
+    if (blankRange && i === blankRange.start) {
+      const blankSpan = document.createElement('span');
+      blankSpan.className = 'letter-box blank';
+      blankSpan.textContent = '';
+      wordDisplay.appendChild(blankSpan);
+      i = blankRange.end;
+      continue;
+    }
     const charSpan = document.createElement('span');
     charSpan.className = 'letter-box';
-    charSpan.textContent = char === '_' ? '' : char;
-    if (char === '_') charSpan.style.borderBottom = '4px solid var(--text-color)';
+    charSpan.textContent = wordStr[i];
     wordDisplay.appendChild(charSpan);
+    i++;
   }
 }
 
@@ -466,8 +479,7 @@ function renderNext(){
   if(!wordQueue.length)return;
   current=pickNext(); feedback.textContent=""; feedback.className="";
   const {word,start,end,choices}=current;
-  const shown=word.slice(0,start)+"_".repeat(end-start)+word.slice(end);
-  renderWordWithBoxes(shown);
+  renderWordWithBoxes(word, '', {start, end});
   speak(word);
   const shuffled=[...choices].sort(()=>Math.random()-0.5);
   optionsDiv.innerHTML="";
