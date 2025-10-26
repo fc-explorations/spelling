@@ -57,6 +57,8 @@
     padding: 40px 60px;
     box-shadow: 0 0 25px rgba(0,0,0,0.25);
     max-width: 90%;
+    position: relative;
+    padding-bottom: 100px; /* space for level selector */
   }
   #word-display {
     font-size: 2.8em;
@@ -107,6 +109,13 @@
     text-align: center;
     margin-top: 10px;
   }
+  #replay-word {
+    background-color: #d5f4d5;
+    color: #145214;
+  }
+  #replay-word:hover {
+    background-color: #bdeab5;
+  }
   #admin-panel details {
     margin-top: 15px;
     border: 1px solid #e0e0e0;
@@ -151,18 +160,19 @@
   }
   #game-header {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
     padding-bottom: 15px;
     margin-bottom: 30px; /* Increased space */
     border-bottom: 2px solid #f0f0f0;
   }
   #level-container {
+    position: absolute;
+    bottom: 20px;
+    left: 25px;
     display: flex;
     align-items: center;
-    justify-content: center;
     gap: 10px;
-    margin-bottom: 0; /* Reset margin */
     font-weight: bold;
   }
   #level-select {
