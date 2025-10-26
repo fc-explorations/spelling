@@ -589,7 +589,7 @@ async function loadLevel(file){
     levelSelect.value = file;
     renderNext();
   }catch{
-    wordDisplay.textContent="🎉 All levels complete!"; optionsDiv.innerHTML=""; feedback.textContent="";
+    wordDisplay.textContent="Great job!"; optionsDiv.innerHTML=""; feedback.textContent="";
     current=null;
     if(replayButton) replayButton.disabled=true;
     launchConfetti();
@@ -678,7 +678,15 @@ function handleAnswer(selectedChoice, correct){
 
   if(totalCount>=attemptThreshold && (correctCount/totalCount)*100>=accThreshold){
     launchConfetti();
-    setTimeout(()=>{currentIndex++; if(currentIndex<levelFiles.length)loadLevel(levelFiles[currentIndex]); else {feedback.textContent="🎉 All levels complete!"; launchConfetti();}},3000);
+    setTimeout(()=>{
+      currentIndex++;
+      if(currentIndex<levelFiles.length){
+        loadLevel(levelFiles[currentIndex]);
+      } else {
+        feedback.textContent="Great job!";
+        launchConfetti();
+      }
+    },3000);
   } else {
     setTimeout(renderNext, 3000);
   }
