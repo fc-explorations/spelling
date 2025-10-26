@@ -206,6 +206,25 @@
   #reset-score:hover {
     background-color: #d98200;
   }
+  #play-again-container {
+    display: none;
+    justify-content: center;
+    margin-top: 30px;
+  }
+  #play-again-container.show {
+    display: flex;
+  }
+  #play-again {
+    background-color: var(--next-btn-bg);
+    color: #0f4510;
+    font-size: 1.1em;
+    padding: 12px 28px;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  }
+  #play-again:hover {
+    background-color: var(--next-btn-hover-bg);
+  }
   #level-select {
     font-size: 1em; padding: 5px; border-radius: 8px; border: 1px solid #ccc; font-family: var(--font-family); background-color: white;
   }
@@ -337,6 +356,9 @@
   <div id="reset-score-container">
     <button id="reset-score" type="button">Reset</button>
   </div>
+  <div id="play-again-container">
+    <button id="play-again" type="button">Play Again</button>
+  </div>
 </div>
 
   <div id="admin-overlay">
@@ -412,6 +434,8 @@ const feedback=document.getElementById("feedback");
 const scoreDiv=document.getElementById("score");
 const replayButton=document.getElementById("replay-word");
 const resetScoreBtn=document.getElementById("reset-score");
+const playAgainContainer=document.getElementById("play-again-container");
+const playAgainButton=document.getElementById("play-again");
 const correctSpellingPopup=document.getElementById("correct-spelling-popup");
 const correctSpellingWord=document.getElementById("correct-spelling-word");
 
@@ -431,6 +455,16 @@ if(resetScoreBtn){
     feedback.textContent="";
     feedback.className="";
     updateScore();
+    if(playAgainContainer) playAgainContainer.classList.remove("show");
+  };
+}
+
+if(playAgainButton){
+  playAgainButton.onclick=()=>{
+    if(!levelFiles.length) return;
+    currentIndex=0;
+    loadLevel(levelFiles[currentIndex]);
+    playAgainContainer.classList.remove("show");
   };
 }
 
@@ -439,6 +473,15 @@ function launchConfetti(){
   const defaults = { origin: { y: 0.6 } };
   confetti({...defaults, spread: 70, particleCount: 120, scalar: 1.1});
   confetti({...defaults, spread: 55, particleCount: 60, startVelocity: 45, scalar: 0.9});
+}
+
+function showCompletion(){
+  wordDisplay.textContent="Great job!";
+  optionsDiv.innerHTML="";
+  feedback.textContent="";
+  current=null;
+  if(replayButton) replayButton.disabled=true;
+  if(playAgainContainer) playAgainContainer.classList.add("show");
 }
 
 // ---------------- Speech ----------------
@@ -589,9 +632,7 @@ async function loadLevel(file){
     levelSelect.value = file;
     renderNext();
   }catch{
-    wordDisplay.textContent="Great job!"; optionsDiv.innerHTML=""; feedback.textContent="";
-    current=null;
-    if(replayButton) replayButton.disabled=true;
+    showCompletion();
     launchConfetti();
   }
 }
@@ -636,12 +677,14 @@ function renderNext(){
   if(!wordQueue.length){
     current=null;
     if(replayButton) replayButton.disabled=true;
+    if(playAgainContainer) playAgainContainer.classList.remove("show");
     return;
   }
   current=pickNext(); feedback.textContent=""; feedback.className="";
   const {word,start,end,choices}=current;
   renderWordWithBoxes(word, '', {start, end});
   if(replayButton) replayButton.disabled=false;
+  if(playAgainContainer) playAgainContainer.classList.remove("show");
   speak(word);
   const shuffled=[...choices].sort(()=>Math.random()-0.5);
   const buttonRow=document.createElement("div");
@@ -683,7 +726,7 @@ function handleAnswer(selectedChoice, correct){
       if(currentIndex<levelFiles.length){
         loadLevel(levelFiles[currentIndex]);
       } else {
-        feedback.textContent="Great job!";
+        showCompletion();
         launchConfetti();
       }
     },3000);
