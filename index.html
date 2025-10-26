@@ -190,6 +190,22 @@
     gap: 10px;
     font-weight: bold;
   }
+  #reset-score-container {
+    position: absolute;
+    bottom: 20px;
+    right: 25px;
+  }
+  #reset-score {
+    background-color: #f39c12;
+    color: #3d2503;
+    font-size: 1em;
+    padding: 10px 20px;
+    border-radius: 12px;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.18);
+  }
+  #reset-score:hover {
+    background-color: #d98200;
+  }
   #level-select {
     font-size: 1em; padding: 5px; border-radius: 8px; border: 1px solid #ccc; font-family: var(--font-family); background-color: white;
   }
@@ -318,6 +334,9 @@
     <button id="replay-word" class="option-btn" type="button">🔁 Hear it again</button>
   </div>
   <div id="feedback"></div>
+  <div id="reset-score-container">
+    <button id="reset-score" type="button">Reset</button>
+  </div>
 </div>
 
   <div id="admin-overlay">
@@ -392,6 +411,7 @@ const optionsDiv=document.getElementById("options");
 const feedback=document.getElementById("feedback");
 const scoreDiv=document.getElementById("score");
 const replayButton=document.getElementById("replay-word");
+const resetScoreBtn=document.getElementById("reset-score");
 const correctSpellingPopup=document.getElementById("correct-spelling-popup");
 const correctSpellingWord=document.getElementById("correct-spelling-word");
 
@@ -402,6 +422,16 @@ if(replayButton){
     if(current) speak(current.word);
   };
   replayButton.disabled=true;
+}
+
+if(resetScoreBtn){
+  resetScoreBtn.onclick=()=>{
+    correctCount=0;
+    totalCount=0;
+    feedback.textContent="";
+    feedback.className="";
+    updateScore();
+  };
 }
 
 function launchConfetti(){
