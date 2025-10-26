@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 <style>
   :root {
     --font-family: "Nunito", "Comic Sans MS", cursive, sans-serif;
@@ -25,6 +26,7 @@
     --admin-bg: #fff3cd;
     --admin-toggle-bg: #3498db;
     --text-color: #333333;
+    --title-spacing: 60px;
   }
 
   /* --- General Styles --- */
@@ -38,17 +40,18 @@
     align-items: center;
     justify-content: flex-start;
     margin: 0;
-    padding: 20px;
+    padding: var(--title-spacing) 20px 20px;
     box-sizing: border-box;
   }
   .title-container {
     position: relative;
     text-align: center;
+    margin-bottom: var(--title-spacing);
   }
   .title-container h1 {
     font-size: 3.2em;
     color: white;
-    margin-bottom: 10px;
+    margin: 0;
     text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
   }
   #game-box {
@@ -390,6 +393,13 @@ if(replayButton){
   replayButton.disabled=true;
 }
 
+function launchConfetti(){
+  if(typeof confetti !== "function") return;
+  const defaults = { origin: { y: 0.6 } };
+  confetti({...defaults, spread: 70, particleCount: 120, scalar: 1.1});
+  confetti({...defaults, spread: 55, particleCount: 60, startVelocity: 45, scalar: 0.9});
+}
+
 // ---------------- Speech ----------------
 function getVoiceList(){
   const select=document.getElementById("voice-select");
@@ -541,6 +551,7 @@ async function loadLevel(file){
     wordDisplay.textContent="🎉 All levels complete!"; optionsDiv.innerHTML=""; feedback.textContent="";
     current=null;
     if(replayButton) replayButton.disabled=true;
+    launchConfetti();
   }
 }
 
@@ -621,7 +632,8 @@ function handleAnswer(selectedChoice, correct){
   updateScore();
 
   if(totalCount>=attemptThreshold && (correctCount/totalCount)*100>=accThreshold){
-    setTimeout(()=>{currentIndex++; if(currentIndex<levelFiles.length)loadLevel(levelFiles[currentIndex]); else feedback.textContent="🎉 All levels complete!";},3000);
+    launchConfetti();
+    setTimeout(()=>{currentIndex++; if(currentIndex<levelFiles.length)loadLevel(levelFiles[currentIndex]); else {feedback.textContent="🎉 All levels complete!"; launchConfetti();}},3000);
   } else {
     setTimeout(renderNext, 3000);
   }
