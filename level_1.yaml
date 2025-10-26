@@ -172,3 +172,15 @@
   wrong:
     - "a"
     - "ei"
+- word: "look"
+  start: 1
+  end: 3
+  wrong:
+    - "u"
+    - "o"
+- word: "moon"  
+  start: 1
+  end: 3
+  wrong:
+    - "u"
+    - "oo"
