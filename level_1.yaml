@@ -220,4 +220,75 @@
   wrong:
     - "oe"
     - "ou"
-- word: "roof"
+- word: "sail"
+  start: 1
+  end: 3
+  wrong:
+    - "e"
+    - "ei"
+- word: "shell"
+  start: 0
+  end: 2
+  wrong:
+    - "tc"
+    - "sc"
+- word: "shut"
+  start: 2    
+  end: 3
+  wrong:
+    - "a"
+    - "e"
+- word: "thin"
+  start: 0
+  end: 2
+  wrong:
+    - "t"
+    - "f"
+- word: "town"
+  start: 1
+  end: 3
+  wrong:
+    - "au"
+    - "aw"
+- word: "turn"
+  start: 1
+  end: 2
+  wrong:
+    - "a"
+    - "e"
+- word: "wag"
+  start: 1
+  end: 3
+  wrong:
+    - "o"
+    - "e"
+- word: "wait"
+  start: 0
+  end: 3
+  wrong:
+    - "ue"
+    - "we"
+- word: "wing"  
+  start: 0
+  end: 2
+  wrong:
+    - "ui"
+    - "we"
+- word: "with"  
+  start: 2
+  end: 4
+  wrong:
+    - "d"
+    - "t"
+- word: "wood"  
+  start: 1
+  end: 3
+  wrong:
+    - "u"
+    - "o"
+- word: "worn"  
+  start: 1
+  end: 3
+  wrong:
+    - "our"
+    - "er"
