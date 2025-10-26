@@ -49,7 +49,7 @@
     margin-bottom: var(--title-spacing);
   }
   .title-container h1 {
-    font-size: 3.2em;
+    font-size: 4.0em;
     color: white;
     margin: 0;
     text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.4);
@@ -225,6 +225,21 @@
   #play-again:hover {
     background-color: var(--next-btn-hover-bg);
   }
+  #prize-emoji {
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    font-size: 4rem;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 1500;
+    transition: opacity 0.4s ease, transform 0.4s ease;
+  }
+  #prize-emoji.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
   #level-select {
     font-size: 1em; padding: 5px; border-radius: 8px; border: 1px solid #ccc; font-family: var(--font-family); background-color: white;
   }
@@ -372,6 +387,8 @@
           <input type="number" id="acc-threshold" min="50" max="100">
           <label for="attempt-threshold">After at least (attempts)</label>
           <input type="number" id="attempt-threshold" min="1">
+          <label for="prize-interval">Prize every (correct streak)</label>
+          <input type="number" id="prize-interval" min="1">
           <button id="save-settings">Save Thresholds</button>
         </div>
       </details>
@@ -414,6 +431,7 @@
     <span>Correct spelling:</span>
     <span id="correct-spelling-word"></span>
   </div>
+  <div id="prize-emoji"></div>
 
 <script>
 // --------------- Global State ----------------
@@ -421,6 +439,8 @@ let wordQueue=[],current=null,correctCount=0,totalCount=0;
 let levelFiles=[],currentIndex=0;
 let accThreshold=parseFloat(localStorage.getItem("accThreshold")||"80");
 let attemptThreshold=parseInt(localStorage.getItem("attemptThreshold")||"10");
+let prizeInterval=parseInt(localStorage.getItem("prizeInterval")||"5");
+let currentStreak=0;
 
 let speechEnabled=localStorage.getItem("speechEnabled")==="true";
 let speechRate=parseFloat(localStorage.getItem("speechRate")||"0.9");
@@ -438,6 +458,7 @@ const playAgainContainer=document.getElementById("play-again-container");
 const playAgainButton=document.getElementById("play-again");
 const correctSpellingPopup=document.getElementById("correct-spelling-popup");
 const correctSpellingWord=document.getElementById("correct-spelling-word");
+const prizeEmojiEl=document.getElementById("prize-emoji");
 
 let correctPopupTimeout=null;
 
@@ -452,10 +473,12 @@ if(resetScoreBtn){
   resetScoreBtn.onclick=()=>{
     correctCount=0;
     totalCount=0;
+    currentStreak=0;
     feedback.textContent="";
     feedback.className="";
     updateScore();
     if(playAgainContainer) playAgainContainer.classList.remove("show");
+    hidePrizeEmoji();
   };
 }
 
@@ -464,7 +487,9 @@ if(playAgainButton){
     if(!levelFiles.length) return;
     currentIndex=0;
     loadLevel(levelFiles[currentIndex]);
+    currentStreak=0;
     playAgainContainer.classList.remove("show");
+    hidePrizeEmoji();
   };
 }
 
@@ -482,6 +507,40 @@ function showCompletion(){
   current=null;
   if(replayButton) replayButton.disabled=true;
   if(playAgainContainer) playAgainContainer.classList.add("show");
+  currentStreak=0;
+  hidePrizeEmoji();
+}
+
+const prizeEmojis=["🎉","🏆","🌟","💎","🚀","🎈","🧁","🦄","🥳","🍀"];
+let prizeTimeout=null;
+
+function maybeShowPrize(){
+  if(!prizeInterval || prizeInterval<1) return;
+  if(currentStreak===0) return;
+  if(currentStreak % prizeInterval !==0) return;
+  const emoji=prizeEmojis[Math.floor(Math.random()*prizeEmojis.length)];
+  triggerPrizeEmoji(emoji);
+}
+
+function triggerPrizeEmoji(emoji){
+  if(!prizeEmojiEl) return;
+  hidePrizeEmoji();
+  prizeEmojiEl.textContent=emoji;
+  requestAnimationFrame(()=>{
+    prizeEmojiEl.classList.add("show");
+  });
+  prizeTimeout=setTimeout(()=>{
+    if(prizeEmojiEl) prizeEmojiEl.classList.remove("show");
+    prizeTimeout=null;
+  },1500);
+}
+
+function hidePrizeEmoji(){
+  if(prizeTimeout){
+    clearTimeout(prizeTimeout);
+    prizeTimeout=null;
+  }
+  if(prizeEmojiEl) prizeEmojiEl.classList.remove("show");
 }
 
 // ---------------- Speech ----------------
@@ -523,6 +582,7 @@ document.getElementById("admin-toggle").onclick=()=>{
   adminOverlay.style.display="flex";
   document.getElementById("acc-threshold").value=accThreshold;
   document.getElementById("attempt-threshold").value=attemptThreshold;
+  document.getElementById("prize-interval").value=prizeInterval;
   document.getElementById("enable-speech").checked=speechEnabled;
   document.getElementById("voice-rate").value=speechRate;
   document.getElementById("rate-value").textContent=speechRate.toFixed(1);
@@ -535,8 +595,10 @@ adminOverlay.onclick=(e)=>{
 document.getElementById("save-settings").onclick=()=>{
   accThreshold=parseFloat(document.getElementById("acc-threshold").value);
   attemptThreshold=parseInt(document.getElementById("attempt-threshold").value);
+  prizeInterval=parseInt(document.getElementById("prize-interval").value) || 1;
   localStorage.setItem("accThreshold",accThreshold);
   localStorage.setItem("attemptThreshold",attemptThreshold);
+  localStorage.setItem("prizeInterval",prizeInterval);
   alert("Thresholds saved!");
 };
 document.getElementById("voice-rate").oninput=(e)=>{
@@ -628,8 +690,10 @@ async function loadLevel(file){
     }
     wordQueue=data.map(d=>({...d,priority:1,choices:[d.word.slice(d.start,d.end),...d.wrong]}));
     correctCount=0; totalCount=0;
+    currentStreak=0;
     localStorage.setItem("currentFile",file);
     levelSelect.value = file;
+    hidePrizeEmoji();
     renderNext();
   }catch{
     showCompletion();
@@ -678,6 +742,8 @@ function renderNext(){
     current=null;
     if(replayButton) replayButton.disabled=true;
     if(playAgainContainer) playAgainContainer.classList.remove("show");
+    currentStreak=0;
+    hidePrizeEmoji();
     return;
   }
   current=pickNext(); feedback.textContent=""; feedback.className="";
@@ -685,6 +751,7 @@ function renderNext(){
   renderWordWithBoxes(word, '', {start, end});
   if(replayButton) replayButton.disabled=false;
   if(playAgainContainer) playAgainContainer.classList.remove("show");
+  hidePrizeEmoji();
   speak(word);
   const shuffled=[...choices].sort(()=>Math.random()-0.5);
   const buttonRow=document.createElement("div");
@@ -706,6 +773,8 @@ function handleAnswer(selectedChoice, correct){
   feedback.textContent = ""; feedback.className = ""; // Clear old feedback
   if(correct){
     correctCount++;
+    currentStreak++;
+    maybeShowPrize();
     renderWordWithBoxes(current.word, "correct-answer-word");
     current.priority=Math.max(current.priority-1,0);
     if(correctSpellingPopup) correctSpellingPopup.classList.remove("visible");
@@ -714,6 +783,8 @@ function handleAnswer(selectedChoice, correct){
     renderWordWithBoxes(wrongWord, "wrong-answer-word");
     current.priority+=2;
     showCorrectSpelling(current.word);
+    currentStreak=0;
+    hidePrizeEmoji();
   }
   speak(current.word);
   const idx=wordQueue.findIndex(x=>x.word===current.word); if(idx!==-1)wordQueue[idx]=current;
