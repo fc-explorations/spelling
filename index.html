@@ -230,7 +230,7 @@
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%) scale(0.5);
-    font-size: 4rem;
+    font-size: 12rem;
     opacity: 0;
     pointer-events: none;
     z-index: 1500;
@@ -461,6 +461,7 @@ const correctSpellingWord=document.getElementById("correct-spelling-word");
 const prizeEmojiEl=document.getElementById("prize-emoji");
 
 let correctPopupTimeout=null;
+let prizeAudioCtx=null;
 
 if(replayButton){
   replayButton.onclick=()=>{
@@ -529,6 +530,7 @@ function triggerPrizeEmoji(emoji){
   requestAnimationFrame(()=>{
     prizeEmojiEl.classList.add("show");
   });
+  playPrizeSound();
   prizeTimeout=setTimeout(()=>{
     if(prizeEmojiEl) prizeEmojiEl.classList.remove("show");
     prizeTimeout=null;
@@ -541,6 +543,31 @@ function hidePrizeEmoji(){
     prizeTimeout=null;
   }
   if(prizeEmojiEl) prizeEmojiEl.classList.remove("show");
+}
+
+function playPrizeSound(){
+  const AudioContext = window.AudioContext || window.webkitAudioContext;
+  if(!AudioContext) return;
+  if(!prizeAudioCtx){
+    prizeAudioCtx=new AudioContext();
+  }
+  if(prizeAudioCtx.state==="suspended"){
+    prizeAudioCtx.resume();
+  }
+  const now=prizeAudioCtx.currentTime;
+  const freqs=[523.25,659.25,783.99]; // C5, E5, G5
+  freqs.forEach((freq, idx)=>{
+    const osc=prizeAudioCtx.createOscillator();
+    const gain=prizeAudioCtx.createGain();
+    osc.frequency.value=freq;
+    osc.type="sine";
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.exponentialRampToValueAtTime(0.2, now+0.01);
+    gain.gain.exponentialRampToValueAtTime(0.001, now+0.4+idx*0.05);
+    osc.connect(gain).connect(prizeAudioCtx.destination);
+    osc.start(now+idx*0.05);
+    osc.stop(now+0.5+idx*0.05);
+  });
 }
 
 // ---------------- Speech ----------------
