@@ -202,3 +202,22 @@
   wrong:
     - "a"
     - "ei"
+- word: "quick"
+  start: 1
+  end: 3
+  wrong:
+    - "ue"
+    - "i"
+- word: "rain"
+  start: 1
+  end: 3
+  wrong:
+    - "ee"
+    - "ei"
+- word: "road"
+  start: 1
+  end: 3
+  wrong:
+    - "oe"
+    - "ou"
+- word: "roof"
