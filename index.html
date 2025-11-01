@@ -491,6 +491,7 @@ const wordDisplay=document.getElementById("word-display");
 const optionsDiv=document.getElementById("options");
 const feedback=document.getElementById("feedback");
 const scoreDiv=document.getElementById("score");
+const replayContainer=document.getElementById("replay-container");
 const replayButton=document.getElementById("replay-word");
 const resetScoreBtn=document.getElementById("reset-score");
 const playAgainContainer=document.getElementById("play-again-container");
@@ -583,12 +584,20 @@ function showCompletion(){
   feedback.textContent="";
   current=null;
   if(replayButton) replayButton.disabled=true;
+  if(replayContainer) replayContainer.style.display="none";
   if(playAgainContainer) playAgainContainer.classList.add("show");
   currentStreak=0;
   hidePrizeEmoji();
 }
 
-const prizeEmojis=["🎉","🏆","🌟","💎","🚀","🎈","🧁","🦄","🥳","🍀"];
+const prizeEmojis=[
+  "🎉","🏆","🌟","💎","🚀","🎈","🧁","🦄","🥳","🍀",
+  "🎊","🎯","⚡️","🔥","🌈","🍩","🍓","🍉","🍪","🍭",
+  "🍦","🍫","🍎","🍇","🍒","🍍","🍿","🥇","🥈","🥉",
+  "🎮","🎻","🎺","🎷","🥁","🎨","🖌️","🧸","🪅","🚁",
+  "🚢","✈️","🚲","🛼","🎢","🎡","🎠","🏖️","🏝️","🌋",
+  "🌠","🪐","⭐️","☀️","🌞","🌻","🌼","🌺","🌴","🌳"
+];
 let prizeTimeout=null;
 
 function maybeShowPrize(){
@@ -860,6 +869,7 @@ function renderNext(){
   if(!wordQueue.length){
     current=null;
     if(replayButton) replayButton.disabled=true;
+    if(replayContainer) replayContainer.style.display="none";
     if(playAgainContainer) playAgainContainer.classList.remove("show");
     currentStreak=0;
     hidePrizeEmoji();
@@ -869,6 +879,7 @@ function renderNext(){
   const {word,start,end,choices}=current;
   renderWordWithBoxes(word, '', {start, end});
   if(replayButton) replayButton.disabled=false;
+  if(replayContainer) replayContainer.style.display="flex";
   if(playAgainContainer) playAgainContainer.classList.remove("show");
   hidePrizeEmoji();
   speak(word);
