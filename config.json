@@ -5,7 +5,8 @@
   ],
   "backgrounds": [
     "img/cats.jpg",
-    "img/cats2.jpg"
+    "img/cats2.jpg",
+    "img/cats3.jpg"
   ],
   "defaults": {
     "progress": {
