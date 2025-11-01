@@ -229,16 +229,51 @@
     position: fixed;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -50%) scale(0.5);
-    font-size: 12rem;
+    transform: translate(-50%, -50%) scale(0.2);
+    transform-origin: center;
+    font-size: var(--prize-size, min(55vw, 55vh));
+    line-height: 1;
     opacity: 0;
     pointer-events: none;
     z-index: 1500;
-    transition: opacity 0.4s ease, transform 0.4s ease;
   }
   #prize-emoji.show {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1.1);
+    animation: prize-emoji-grow 3s forwards;
+  }
+  @keyframes prize-emoji-grow {
+    0% {
+      opacity: 0;
+      transform: translate(-50%, -50%) scale(0.2);
+    }
+    15% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 1;
+      transform: translate(-50%, -50%) scale(1);
+    }
+  }
+  #emoji-tray {
+    margin-top: 35px;
+    width: min(90%, 900px);
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 14px;
+    padding: 14px 18px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 18px;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+    font-size: 2.4rem;
+    color: white;
+  }
+  #emoji-tray span {
+    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.25));
+  }
+  #emoji-tray.empty {
+    font-size: 1.1rem;
+    letter-spacing: 0.02em;
+    color: rgba(255,255,255,0.85);
   }
   #level-select {
     font-size: 1em; padding: 5px; border-radius: 8px; border: 1px solid #ccc; font-family: var(--font-family); background-color: white;
@@ -376,6 +411,8 @@
   </div>
 </div>
 
+<div id="emoji-tray" class="empty" aria-live="polite"></div>
+
   <div id="admin-overlay">
     <div id="admin-panel">
       <button id="admin-close-btn">&times;</button>
@@ -447,6 +484,8 @@ let speechRate=parseFloat(localStorage.getItem("speechRate")||"0.9");
 let speechVoiceURI=localStorage.getItem("speechVoiceURI")||"";
 
 // DOM
+const gameBox=document.getElementById("game-box");
+const emojiTray=document.getElementById("emoji-tray");
 const levelSelect=document.getElementById("level-select");
 const wordDisplay=document.getElementById("word-display");
 const optionsDiv=document.getElementById("options");
@@ -462,6 +501,43 @@ const prizeEmojiEl=document.getElementById("prize-emoji");
 
 let correctPopupTimeout=null;
 let prizeAudioCtx=null;
+let emojiCollection=[];
+
+function getStoredEmojiCollection(){
+  try{
+    const stored=JSON.parse(localStorage.getItem("emojiCollection") || "[]");
+    if(Array.isArray(stored)) return stored;
+  }catch{
+    // ignore malformed stored value
+  }
+  return [];
+}
+function renderEmojiTray(){
+  if(!emojiTray) return;
+  emojiTray.innerHTML="";
+  if(!emojiCollection.length){
+    emojiTray.classList.add("empty");
+    emojiTray.textContent="Collect prize emojis by keeping your streak going!";
+    return;
+  }
+  emojiTray.classList.remove("empty");
+  emojiCollection.forEach(symbol=>{
+    const span=document.createElement("span");
+    span.textContent=symbol;
+    emojiTray.appendChild(span);
+  });
+}
+function addEmojiToTray(emoji){
+  if(!emojiTray) return;
+  if(!emojiCollection.includes(emoji)){
+    emojiCollection.push(emoji);
+    localStorage.setItem("emojiCollection", JSON.stringify(emojiCollection));
+    renderEmojiTray();
+  }
+}
+
+emojiCollection=getStoredEmojiCollection();
+renderEmojiTray();
 
 if(replayButton){
   replayButton.onclick=()=>{
@@ -526,15 +602,28 @@ function maybeShowPrize(){
 function triggerPrizeEmoji(emoji){
   if(!prizeEmojiEl) return;
   hidePrizeEmoji();
+  addEmojiToTray(emoji);
   prizeEmojiEl.textContent=emoji;
+  if(gameBox){
+    const boxRect=gameBox.getBoundingClientRect();
+    const targetSize=Math.min(boxRect.width, boxRect.height)*0.9;
+    if(targetSize>0){
+      prizeEmojiEl.style.setProperty("--prize-size", `${targetSize}px`);
+    }else{
+      prizeEmojiEl.style.removeProperty("--prize-size");
+    }
+  }else{
+    prizeEmojiEl.style.removeProperty("--prize-size");
+  }
+  void prizeEmojiEl.offsetWidth;
   requestAnimationFrame(()=>{
     prizeEmojiEl.classList.add("show");
   });
   playPrizeSound();
   prizeTimeout=setTimeout(()=>{
-    if(prizeEmojiEl) prizeEmojiEl.classList.remove("show");
     prizeTimeout=null;
-  },1500);
+    hidePrizeEmoji();
+  },3200);
 }
 
 function hidePrizeEmoji(){
@@ -542,7 +631,10 @@ function hidePrizeEmoji(){
     clearTimeout(prizeTimeout);
     prizeTimeout=null;
   }
-  if(prizeEmojiEl) prizeEmojiEl.classList.remove("show");
+  if(prizeEmojiEl){
+    prizeEmojiEl.classList.remove("show");
+    prizeEmojiEl.style.removeProperty("--prize-size");
+  }
 }
 
 function playPrizeSound(){
