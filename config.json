@@ -11,11 +11,11 @@
   "defaults": {
     "progress": {
       "accThreshold": 80,
-      "attemptThreshold": 10,
+      "attemptThreshold": 20,
       "prizeInterval": 5
     },
     "speech": {
-      "enabled": false,
+      "enabled": true,
       "rate": 0.9,
       "voiceURI": ""
     }
