@@ -61,15 +61,29 @@ In the example above, the game will display `ex___le` and ask the user to choose
 ## 🚀 How to Add New Levels
 
 1.  **Create the Level File**: Create a new file (e.g., `level_4.yaml`) using the structure described above. You can use the built-in Level Editor for this.
-2.  **Update the Index**: Add the name of your new file to the `index.json` array.
+2.  **Update the Config**: Add the name of your new file to the `levels` array inside `config.json`.
 
     ```json
-    [
-      "level_1.yaml",
-      "level_2.yaml",
-      "level_3.yaml",
-      "level_4.yaml"
-    ]
+    {
+      "levels": [
+        "level_1.yaml",
+        "level_2.yaml",
+        "level_3.yaml",
+        "level_4.yaml"
+      ],
+      "defaults": {
+        "progress": {
+          "accThreshold": 80,
+          "attemptThreshold": 10,
+          "prizeInterval": 5
+        },
+        "speech": {
+          "enabled": false,
+          "rate": 0.9,
+          "voiceURI": ""
+        }
+      }
+    }
     ```
 
 3.  **Done!** The game will automatically discover and load the new level the next time you open it.
@@ -86,4 +100,3 @@ python -m http.server
 ```
 
 Then, navigate to `http://localhost:8000` in your browser.
-

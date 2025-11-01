@@ -475,16 +475,84 @@
 
 <script>
 // --------------- Global State ----------------
+const fallbackConfig={
+  levels:["level_1.yaml","level_2.yaml"],
+  defaults:{
+    progress:{accThreshold:80,attemptThreshold:10,prizeInterval:5},
+    speech:{enabled:false,rate:0.9,voiceURI:""}
+  }
+};
+
+let appConfig=buildConfig();
+
 let wordQueue=[],current=null,correctCount=0,totalCount=0;
-let levelFiles=[],currentIndex=0;
-let accThreshold=parseFloat(localStorage.getItem("accThreshold")||"80");
-let attemptThreshold=parseInt(localStorage.getItem("attemptThreshold")||"10");
-let prizeInterval=parseInt(localStorage.getItem("prizeInterval")||"5");
+let levelFiles=[...appConfig.levels].sort(),currentIndex=0;
+let accThreshold;
+let attemptThreshold;
+let prizeInterval;
 let currentStreak=0;
 
-let speechEnabled=localStorage.getItem("speechEnabled")==="true";
-let speechRate=parseFloat(localStorage.getItem("speechRate")||"0.9");
-let speechVoiceURI=localStorage.getItem("speechVoiceURI")||"";
+let speechEnabled;
+let speechRate;
+let speechVoiceURI;
+
+function buildConfig(raw){
+  const merged=JSON.parse(JSON.stringify(fallbackConfig));
+  if(!raw||typeof raw!=='object') return merged;
+
+  if(Array.isArray(raw.levels)&&raw.levels.length) merged.levels=raw.levels;
+
+  const defaults=raw.defaults&&typeof raw.defaults==='object'?raw.defaults:{};
+  const progress=defaults.progress&&typeof defaults.progress==='object'?defaults.progress:{};
+  const speech=defaults.speech&&typeof defaults.speech==='object'?defaults.speech:{};
+
+  if(isFiniteNumber(progress.accThreshold)) merged.defaults.progress.accThreshold=Number(progress.accThreshold);
+  if(isFiniteNumber(progress.attemptThreshold)) merged.defaults.progress.attemptThreshold=Math.max(1,Math.round(Number(progress.attemptThreshold)));
+  if(isFiniteNumber(progress.prizeInterval)) merged.defaults.progress.prizeInterval=Math.max(1,Math.round(Number(progress.prizeInterval)));
+
+  if(typeof speech.enabled==='boolean') merged.defaults.speech.enabled=speech.enabled;
+  if(isFiniteNumber(speech.rate)) merged.defaults.speech.rate=Number(speech.rate);
+  if(typeof speech.voiceURI==='string') merged.defaults.speech.voiceURI=speech.voiceURI;
+
+  return merged;
+}
+
+function isFiniteNumber(value){
+  const num=Number(value);
+  return Number.isFinite(num);
+}
+
+function readNumberSetting(key, fallback){
+  const stored=localStorage.getItem(key);
+  if(stored===null||stored==='') return fallback;
+  const num=Number(stored);
+  return Number.isFinite(num)?num:fallback;
+}
+
+function readBooleanSetting(key, fallback){
+  const stored=localStorage.getItem(key);
+  if(stored===null) return fallback;
+  return stored==='true';
+}
+
+function readStringSetting(key, fallback){
+  const stored=localStorage.getItem(key);
+  return stored===null?fallback:stored;
+}
+
+function hydrateSettingsFromStorage(){
+  const defaults=appConfig.defaults||fallbackConfig.defaults;
+  const progressDefaults=defaults.progress||fallbackConfig.defaults.progress;
+  const speechDefaults=defaults.speech||fallbackConfig.defaults.speech;
+
+  accThreshold=readNumberSetting('accThreshold', progressDefaults.accThreshold);
+  attemptThreshold=Math.max(1, Math.round(readNumberSetting('attemptThreshold', progressDefaults.attemptThreshold)));
+  prizeInterval=Math.max(1, Math.round(readNumberSetting('prizeInterval', progressDefaults.prizeInterval)));
+
+  speechEnabled=readBooleanSetting('speechEnabled', speechDefaults.enabled);
+  speechRate=readNumberSetting('speechRate', speechDefaults.rate);
+  speechVoiceURI=readStringSetting('speechVoiceURI', speechDefaults.voiceURI||'');
+}
 
 // DOM
 const gameBox=document.getElementById("game-box");
@@ -506,6 +574,8 @@ const prizeEmojiEl=document.getElementById("prize-emoji");
 let correctPopupTimeout=null;
 let prizeAudioCtx=null;
 let emojiCollection=[];
+
+hydrateSettingsFromStorage();
 
 function getStoredEmojiCollection(){
   try{
@@ -789,44 +859,74 @@ document.getElementById("reset-level").onclick=()=>{
 // ---------------- Game ----------------
 async function discoverLevels(){
   try{
-    const r=await fetch("index.json");
-    if (!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
-    const json=await r.json(); levelFiles=json.sort();
-  } catch(e) { console.error("Could not fetch index.json, using fallback levels.", e); levelFiles=["level_1.yaml","level_1.2.yaml","level_2.yaml"].sort();}
-  
-  levelSelect.innerHTML = "";
-  levelFiles.forEach(file => {
-    const option = document.createElement("option");
-    option.value = file;
-    option.textContent = file.replace(/_/g, ' ').replace('.yaml', '');
+    const r=await fetch("config.json");
+    if(!r.ok) throw new Error(`HTTP error! status: ${r.status}`);
+    const json=await r.json();
+    appConfig=buildConfig(json);
+  }catch(e){
+    console.error("Could not fetch config.json, using fallback configuration.", e);
+    appConfig=buildConfig();
+  }
+
+  const configuredLevels=Array.isArray(appConfig.levels)?appConfig.levels:fallbackConfig.levels;
+  levelFiles=[...new Set(configuredLevels.filter(level=>typeof level==="string"&&level.trim()))].map(level=>level.trim()).sort();
+  if(!levelFiles.length){
+    levelFiles=[...fallbackConfig.levels].sort();
+  }
+  appConfig.levels=[...levelFiles];
+
+  hydrateSettingsFromStorage();
+
+  levelSelect.innerHTML="";
+  levelFiles.forEach(file=>{
+    const option=document.createElement("option");
+    option.value=file;
+    option.textContent=file.replace(/_/g,' ').replace('.yaml','');
     levelSelect.appendChild(option);
   });
 
   const saved=localStorage.getItem("currentFile");
-  if(saved)currentIndex=Math.max(0,levelFiles.indexOf(saved));
-  loadLevel(levelFiles[currentIndex]);
+  if(saved){
+    const savedIndex=levelFiles.indexOf(saved);
+    currentIndex=savedIndex>=0?savedIndex:0;
+  }else{
+    currentIndex=0;
+  }
+
+  const targetLevel=levelFiles[currentIndex]||levelFiles[0];
+  if(targetLevel){
+    loadLevel(targetLevel);
+  }else{
+    showCompletion();
+  }
+
+  getVoiceList();
 }
 
 async function loadLevel(file){
   try{
     let data;
     currentIndex = levelFiles.indexOf(file);
-    const customLevel = localStorage.getItem(`custom_${file}`);
+    if(currentIndex<0) currentIndex=0;
+    const targetFile=levelFiles[currentIndex]||file;
+    if(!targetFile) throw new Error("No level file available.");
+    const customLevel = localStorage.getItem(`custom_${targetFile}`);
     if (customLevel) {
-      console.log(`Loading custom version of ${file} from localStorage.`);
+      console.log(`Loading custom version of ${targetFile} from localStorage.`);
       data = jsyaml.load(customLevel);
     } else {
-      const res=await fetch(file); const text=await res.text();
+      const res=await fetch(targetFile); const text=await res.text();
       data=jsyaml.load(text);
     }
     wordQueue=data.map(d=>({...d,priority:1,choices:[d.word.slice(d.start,d.end),...d.wrong]}));
     correctCount=0; totalCount=0;
     currentStreak=0;
-    localStorage.setItem("currentFile",file);
-    levelSelect.value = file;
+    localStorage.setItem("currentFile",targetFile);
+    levelSelect.value = targetFile;
     hidePrizeEmoji();
     renderNext();
-  }catch{
+  }catch(err){
+    console.error("Failed to load level", file, err);
     showCompletion();
     launchConfetti();
   }
@@ -943,7 +1043,6 @@ function updateScore(){scoreDiv.textContent=`Score: ${correctCount}/${totalCount
 levelSelect.addEventListener("change", (e) => loadLevel(e.target.value));
 discoverLevels();
 refreshEntries();
-getVoiceList();
 </script>
 </body>
 </html>
