@@ -3,6 +3,10 @@
     "level_1.yaml",
     "level_2.yaml"
   ],
+  "backgrounds": [
+    "img/cats.jpg",
+    "img/cats2.jpg"
+  ],
   "defaults": {
     "progress": {
       "accThreshold": 80,

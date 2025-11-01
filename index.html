@@ -35,7 +35,7 @@
     background:
       radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0)),
       radial-gradient(circle at 80% 85%, rgba(255, 255, 255, 0.45), rgba(255, 255, 255, 0)),
-      url("img/cats.jpg") center/cover fixed;
+      var(--body-bg-image, url("img/cats.jpg")) center/cover fixed;
     color: var(--text-color);
     min-height: 100vh;
     display: flex;
@@ -477,6 +477,7 @@
 // --------------- Global State ----------------
 const fallbackConfig={
   levels:["level_1.yaml","level_2.yaml"],
+  backgrounds:["img/cats.jpg","img/cats2.jpg"],
   defaults:{
     progress:{accThreshold:80,attemptThreshold:10,prizeInterval:5},
     speech:{enabled:false,rate:0.9,voiceURI:""}
@@ -500,7 +501,11 @@ function buildConfig(raw){
   const merged=JSON.parse(JSON.stringify(fallbackConfig));
   if(!raw||typeof raw!=='object') return merged;
 
-  if(Array.isArray(raw.levels)&&raw.levels.length) merged.levels=raw.levels;
+  const levelList=normalizeStringList(raw.levels);
+  if(levelList.length) merged.levels=levelList;
+
+  const backgroundList=normalizeStringList(raw.backgrounds);
+  if(backgroundList.length) merged.backgrounds=backgroundList;
 
   const defaults=raw.defaults&&typeof raw.defaults==='object'?raw.defaults:{};
   const progress=defaults.progress&&typeof defaults.progress==='object'?defaults.progress:{};
@@ -520,6 +525,23 @@ function buildConfig(raw){
 function isFiniteNumber(value){
   const num=Number(value);
   return Number.isFinite(num);
+}
+
+function normalizeStringList(list){
+  if(!Array.isArray(list)) return [];
+  const seen=new Set();
+  const cleaned=[];
+  list.forEach(item=>{
+    if(typeof item!=="string") return;
+    const trimmed=item.trim();
+    if(!trimmed) return;
+    const normalized=trimmed.replace(/\\/g,"/");
+    if(!seen.has(normalized)){
+      seen.add(normalized);
+      cleaned.push(normalized);
+    }
+  });
+  return cleaned;
 }
 
 function readNumberSetting(key, fallback){
@@ -552,6 +574,21 @@ function hydrateSettingsFromStorage(){
   speechEnabled=readBooleanSetting('speechEnabled', speechDefaults.enabled);
   speechRate=readNumberSetting('speechRate', speechDefaults.rate);
   speechVoiceURI=readStringSetting('speechVoiceURI', speechDefaults.voiceURI||'');
+}
+
+function applyRandomBackground(){
+  if(!document.body) return;
+  const configuredBackgrounds=Array.isArray(appConfig.backgrounds)?appConfig.backgrounds:[];
+  let candidates=normalizeStringList(configuredBackgrounds);
+  if(!candidates.length){
+    candidates=normalizeStringList(fallbackConfig.backgrounds);
+  }
+  if(!candidates.length){
+    document.body.style.removeProperty("--body-bg-image");
+    return;
+  }
+  const chosen=candidates[Math.floor(Math.random()*candidates.length)];
+  document.body.style.setProperty("--body-bg-image", `url("${chosen}")`);
 }
 
 // DOM
@@ -876,6 +913,7 @@ async function discoverLevels(){
   appConfig.levels=[...levelFiles];
 
   hydrateSettingsFromStorage();
+  applyRandomBackground();
 
   levelSelect.innerHTML="";
   levelFiles.forEach(file=>{
